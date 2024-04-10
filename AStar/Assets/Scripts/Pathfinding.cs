@@ -17,10 +17,14 @@ public class Pathfinding : MonoBehaviour
     public static bool walkable = true;
 
     public float moveSpeed;
-    public float range;
+    public float delay;
 
     public bool isWalk;
     public bool isWalking;
+
+    public int weight;
+
+    private bool isSearch = false;
 
     private void Awake()
     {
@@ -32,13 +36,13 @@ public class Pathfinding : MonoBehaviour
     void Start()
     {
         isWalking = false;
-        moveSpeed = 20;
-        range = 4;
+
+        StartPathFind(transform.position, target.transform.position);
     }
 
     private void FixedUpdate()
     {
-        StartPathFind(transform.position, target.transform.position);
+        Move();
     }
         
 
@@ -52,8 +56,7 @@ public class Pathfinding : MonoBehaviour
     {
         Node startNode = grid.GetWorldPointToNode(startPos);
         Node endNode = grid.GetWorldPointToNode(targetPos);
-
-        bool isArrive = false;
+        isSearch = false;
         if(!startNode.walkable)
         {
             Debug.LogError("StartNode is not walkable");
@@ -69,6 +72,7 @@ public class Pathfinding : MonoBehaviour
             while(openNodes.Count > 0)
             {
                 Node curNode = openNodes[0];
+                if (closedNodes.Contains(curNode)) continue;
                 for(int i = 0; i < openNodes.Count; i++)
                 {
                     if(openNodes[i].fCost <= curNode.fCost && openNodes[i].hCost < curNode.hCost)
@@ -78,14 +82,15 @@ public class Pathfinding : MonoBehaviour
                 }
                 openNodes.Remove(curNode);
                 closedNodes.Add(curNode);
+                grid.nodes.Add(curNode);
                 if(curNode == endNode)
                 {
-                    if(!isArrive)
+                    if(!isSearch)
                     {
                         PushWay(RetracePath(startNode, endNode));
                     }
-                    isArrive = true;
-                    break;
+                    isSearch = true;
+                    yield break;
                 }
                 foreach(Node neighbourNode in grid.GetNeighbourNodes(curNode))
                 {
@@ -99,25 +104,11 @@ public class Pathfinding : MonoBehaviour
                         if(!openNodes.Contains(neighbourNode)) openNodes.Add(neighbourNode);
                     }
                 }
+                yield return new WaitForSeconds(delay);
             }
         }
 
-        yield return null;
-        if(isArrive)
-        {
-            isWalking = true;
-            while(wayQueue.Count > 0)
-            {
-                var dir = wayQueue.First() - transform.position;
-                transform.Translate(dir.normalized * moveSpeed * Time.deltaTime);
-                if(transform.position == wayQueue.First())
-                {
-                    wayQueue.Dequeue();
-                }
-                yield return null;
-            }
-            isWalking = false;
-        }
+        
     }
 
     private void PushWay(Vector3[] array)
@@ -158,13 +149,35 @@ public class Pathfinding : MonoBehaviour
     {
         int distX = Mathf.Abs(nodeA.gridX - nodeB.gridX);
         int distY = Mathf.Abs(nodeA.gridY - nodeB.gridY);
-        if(distX > distY) return 14 * distY + 10 * (distX - distY);
-        else return 14 * distX + 10 * (distY - distX);
+        int dist;
+        if(distX > distY) dist = 14 * distY + 10 * (distX - distY);
+        else dist = 14 * distX + 10 * (distY - distX);
+        //return dist;
+        //dist = (int)(weight * (distX + distY));
+        return dist;
     }
 
-    // Update is called once per frame
-    void Update()
+    private void Move()
     {
-        
+        if (isSearch)
+        {
+            isWalking = true;
+            if (wayQueue.Count > 0)
+            {
+                //var dir = wayQueue.First() - transform.position;
+                //StartPathFind(transform.position, target.transform.position);
+                //transform.Translate(dir.normalized * moveSpeed * Time.deltaTime);
+                var pos = wayQueue.First();
+                pos.y = transform.position.y;
+                transform.position = Vector3.MoveTowards(transform.position, pos, moveSpeed * Time.deltaTime);
+                if (transform.position == pos)
+                {
+                    wayQueue.Dequeue();
+                }
+            }
+            isWalking = false;
+        }
     }
+
+   
 }

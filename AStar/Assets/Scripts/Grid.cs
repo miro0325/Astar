@@ -11,6 +11,8 @@ public class Grid : MonoBehaviour
     public float nodeRadius;
     private Node[,] grid;
 
+    public List<Node> nodes = new();
+
     private float nodeDiameter;
 
     private int gridSizeX, gridSizeY;
@@ -82,6 +84,7 @@ public class Grid : MonoBehaviour
         return grid[x, y];
     }
 
+
     public bool IsInGrid(int x, int y)
     {
         if(x >= 0 && x < gridSizeX && y >= 0 && y < gridSizeY)
@@ -103,6 +106,11 @@ public class Grid : MonoBehaviour
         
     }
 
+    public Vector2Int GetSize()
+    {
+        return new Vector2Int(gridSizeX, gridSizeY);
+    }
+
     private void OnDrawGizmos()
     {
         if (!displayGridGizmos) return;
@@ -115,10 +123,15 @@ public class Grid : MonoBehaviour
             Node endNode = GetWorldPointToNode(player.target.transform.position);
             foreach(Node node in grid)
             {
+                
                 //Debug.Log("test");
                 Gizmos.color = (node.walkable) ? new Color(1,1,1,0.3f) : new Color(1,0,0,0.3f);
                 //if(!node.walkable)
-                if(path != null)
+                if (nodes.Contains(node))
+                {
+                    Gizmos.color = new Color(0.8f, 0f, 0.8f, 0.3f);
+                }
+                if (path != null)
                 {
                     if(path.Contains(node))
                     {
@@ -126,11 +139,13 @@ public class Grid : MonoBehaviour
                     }
 
                 }
+
                 if(node == playerNode || node == endNode)
                 {
                     Gizmos.color = new Color(0, 0, 1, 0.3f);
                 }
                 //Debug.Log(node.worldPos);
+               
                 Gizmos.DrawCube(node.worldPos, new Vector3(1, 1, 1) * (nodeDiameter - 0.1f));
                 
             }
