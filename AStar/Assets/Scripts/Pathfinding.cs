@@ -3,11 +3,13 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using System.Linq;
+using TMPro;
 
 public class Pathfinding : MonoBehaviour
 {
     [SerializeField]
     public GameObject target;
+    public TextMeshPro textMeshPro;
 
     [SerializeField]
     private Grid grid;
@@ -73,9 +75,9 @@ public class Pathfinding : MonoBehaviour
             {
                 Node curNode = openNodes[0];
                 if (closedNodes.Contains(curNode)) continue;
-                for(int i = 0; i < openNodes.Count; i++)
+                for (int i = 0; i < openNodes.Count; i++)
                 {
-                    if(openNodes[i].fCost <= curNode.fCost && openNodes[i].hCost < curNode.hCost)
+                    if (openNodes[i].fCost <= curNode.fCost && openNodes[i].hCost < curNode.hCost)
                     {
                         curNode = openNodes[i];
                     }
@@ -92,23 +94,28 @@ public class Pathfinding : MonoBehaviour
                     isSearch = true;
                     yield break;
                 }
+
                 foreach(Node neighbourNode in grid.GetNeighbourNodes(curNode))
                 {
                     if (!neighbourNode.walkable || closedNodes.Contains(neighbourNode)) continue;
                     int fCost = curNode.gCost + GetDistance(curNode, neighbourNode);
                     if(fCost < neighbourNode.gCost || !openNodes.Contains(neighbourNode))
                     {
+                        //neighbourNode.gCost = GetDistance(neighbourNode,startNode);
                         neighbourNode.gCost = fCost;
                         neighbourNode.hCost = GetDistance(neighbourNode, endNode);
                         neighbourNode.parentNode = curNode;
+                        grid.nodes.Add(neighbourNode);
                         if(!openNodes.Contains(neighbourNode)) openNodes.Add(neighbourNode);
                     }
                 }
+                var text = Instantiate(textMeshPro, curNode.worldPos, Quaternion.Euler(90, 90, -180));
+                text.text = $"{curNode.gCost}|{GetDistance(curNode, endNode)}";
+                //text.text = $"{curNode.gCost + GetDistance(curNode, endNode)}";
                 yield return new WaitForSeconds(delay);
             }
         }
-
-        
+        Debug.Log("End Finding");
     }
 
     private void PushWay(Vector3[] array)
@@ -149,11 +156,13 @@ public class Pathfinding : MonoBehaviour
     {
         int distX = Mathf.Abs(nodeA.gridX - nodeB.gridX);
         int distY = Mathf.Abs(nodeA.gridY - nodeB.gridY);
+        int remaining = Mathf.Abs(distX - distY);
         int dist;
-        if(distX > distY) dist = 14 * distY + 10 * (distX - distY);
-        else dist = 14 * distX + 10 * (distY - distX);
+        //if(distX > distY) dist = 14 * distY + 10 * (distX - distY);
+        //else dist = 14 * distX + 10 * (distY - distX);
         //return dist;
         //dist = (int)(weight * (distX + distY));
+        dist = 14 * Mathf.Min(distX, distY) + 10 * remaining;
         return dist;
     }
 

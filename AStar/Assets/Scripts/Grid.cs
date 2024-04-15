@@ -130,7 +130,7 @@ public class Grid : MonoBehaviour
                 if (nodes.Contains(node))
                 {
                     Gizmos.color = new Color(0.8f, 0f, 0.8f, 0.3f);
-                }
+                }   
                 if (path != null)
                 {
                     if(path.Contains(node))
